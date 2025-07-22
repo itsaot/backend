@@ -1,12 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const {
-  createPost,
-  getPosts,
-  getPostById,
-} = require("../controllers/postController");
-const { auth } = require("../middleware/auth");
+const { createPost, getPosts } = require("../controllers/postController");
 
-router.get("/:id", getPostById);
+/** PUBLIC ROUTES */
+router.post("/", createPost); // POST /api/posts
+router.get("/", getPosts);    // GET /api/posts
 
 module.exports = router;
