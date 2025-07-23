@@ -1,5 +1,10 @@
 const Post = require("../models/Post");
 
+const createPost = async (req, res) => {
+  console.log("Incoming post request body:", req.body);
+ 
+};
+
 exports.createPost = async (req, res) => {
   try {
     const { type, content, adviceRequested } = req.body;

@@ -2,6 +2,8 @@ const express = require("express");
 const connectDB = require("./config/db");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const incidentRoutes = require('./routes/incidentRoutes');
+
 
 // Load environment variables
 dotenv.config();
@@ -10,10 +12,17 @@ dotenv.config();
 connectDB();
 
 const app = express();
-app.use(cors());
+
+app.use(cors({
+  origin: "*", // OR specify your frontend URL like: "https://cyberguard-frontend.vercel.app"
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: false
+}));
 app.use(express.json());
 
 // Routes
+app.use('/api', incidentRoutes);
+app.use("/api/reports", require("./routes/reports"));
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/posts", require("./routes/posts"));
 app.use("/api/moderation", require("./routes/moderation"));
