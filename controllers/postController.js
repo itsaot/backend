@@ -1,10 +1,5 @@
 const Post = require("../models/Post");
 
-const createPost = async (req, res) => {
-  console.log("Incoming post request body:", req.body);
- 
-};
-
 const getPosts = async (req, res) => {
   try {
     const posts = await Post.find().sort({ createdAt: -1 });
