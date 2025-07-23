@@ -21,8 +21,6 @@ app.use("/api/auth", require("./routes/auth"));
 app.use("/api/posts", require("./routes/posts"));
 app.use("/api/moderation", require("./routes/moderation"));
 app.use("/api/escalation", require("./routes/escalation"));
-app.use("/api/advice", require("./routes/advice")); // ✅ Include advice route if needed
-app.use("/api/flag", require("./routes/flag"));     // ✅ Include flag route if needed
 
 // 404 handler (keep after routes)
 app.use((req, res) => {
