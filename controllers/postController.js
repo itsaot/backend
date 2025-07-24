@@ -204,6 +204,33 @@ const flagPost = async (req, res) => {
     res.status(500).json({ message: "Error flagging post", error });
   }
 };
+export const toggleLikePost = async (req, res) => {
+  try {
+    const postId = req.params.postId;
+    const userId = req.user?._id; // or req.body.userId if you passed it like that
+
+    console.log('Toggling like:', { postId, userId });
+
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+
+    const liked = post.likes.includes(userId);
+
+    if (liked) {
+      post.likes = post.likes.filter(id => id.toString() !== userId.toString());
+    } else {
+      post.likes.push(userId);
+    }
+
+    await post.save();
+
+    res.json({ liked: !liked });
+  } catch (error) {
+    console.error('toggleLikePost error:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
 
 module.exports = {
   getPosts,
@@ -216,4 +243,5 @@ module.exports = {
   deleteComment,
   softDeletePost,
   flagPost,
+  toggleLikePost,
 };

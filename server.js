@@ -29,6 +29,8 @@ app.use("/api/escalation", require("./routes/escalation"));
 app.use((req, res) => {
   res.status(404).json({ message: "Resource not found" });
 });
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
 
 // Error handler (final fallback)
 app.use((err, req, res, next) => {
