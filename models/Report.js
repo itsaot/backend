@@ -9,7 +9,7 @@ const ReportSchema = new mongoose.Schema({
   platform: {
     type: String,
     required: [true, 'Platform is required'],
-    trim: true,
+    trim: true, 
   },
   description: {
     type: String,
@@ -33,6 +33,12 @@ const ReportSchema = new mongoose.Schema({
     lowercase: true,
     trim: true,
   },
+  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+comments: [{
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  text: String,
+  createdAt: { type: Date, default: Date.now },
+}],
   evidence: {
     type: String,
     trim: true,
