@@ -60,18 +60,29 @@ const getPostById = async (req, res) => {
 // Toggle like/unlike a post
 const toggleLikePost = async (req, res) => {
   try {
-    const postId = req.params.id || req.params.postId;
-    const userId = req.user?._id || req.body.userId;
-    if (!userId) return res.status(400).json({ message: "User ID is required" });
+    const postId = req.params.postId || req.params.id;
+    // userId from auth or body
+    let userId = req.user?._id || req.body.userId;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    // Convert userId to mongoose ObjectId for safe comparison
+    const mongoose = require("mongoose");
+    userId = mongoose.Types.ObjectId(userId);
 
     const post = await Post.findById(postId);
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-    const liked = post.likes.includes(userId.toString());
+    // Check if userId is in likes (convert all to string to compare)
+    const liked = post.likes.some((id) => id.toString() === userId.toString());
 
     if (liked) {
-      post.likes = post.likes.filter(id => id.toString() !== userId.toString());
+      // Remove userId
+      post.likes = post.likes.filter((id) => id.toString() !== userId.toString());
     } else {
+      // Add userId
       post.likes.push(userId);
     }
 
@@ -79,9 +90,11 @@ const toggleLikePost = async (req, res) => {
 
     res.json({ liked: !liked, likesCount: post.likes.length });
   } catch (error) {
+    console.error("Error toggling like:", error);
     res.status(500).json({ message: error.message || "Internal Server Error" });
   }
 };
+
 
 // Add a comment
 const addComment = async (req, res) => {
