@@ -1,42 +1,39 @@
 const express = require("express");
 const router = express.Router();
+
 const {
   getPosts,
   createPost,
   getPostById,
-  likePost,
-  unlikePost,
+  toggleLikePost,
   addComment,
+  replyToComment,
   deleteComment,
   softDeletePost,
   flagPost,
-  replyToComment
+  deletePost, // Assuming you have this in your controller for full delete
 } = require("../controllers/postController");
 
-const { auth, isAdmin } = require("../middleware/auth");
+const { auth, isAdmin, verifyToken, verifyAdmin } = require("../middleware/auth");
 
-// Public routes
+// Public routes (no auth required)
 router.get("/", getPosts);
 router.post("/", createPost);
 router.get("/:id", getPostById);
-router.post("/:id/like", likePost);
-router.post("/:id/unlike", unlikePost);
-router.post("/:id/comments", addComment);
-// routes/postRoutes.js
-router.post('/:postId/like', toggleLikePost); // No verifyToken
-router.post('/:postId/comments', addComment); // No verifyToken
 
-// Authenticated route for replying to comments
-router.post('/:postId/comments/:commentId/replies', replyToComment);
-router.post('/:postId/like', toggleLikePost);
+// Like/unlike toggling (no auth required)
+router.post("/:postId/like", toggleLikePost);
 
-// Authenticated user can delete their own comment
-router.delete("/:id/comments/:commentId", auth, deleteComment);
-router.delete('/:postId/comments/:commentId', verifyToken, deleteComment);
-router.delete('/:postId', verifyToken, verifyAdmin, deletePost);
+// Comments (no auth required for adding comments and replies)
+router.post("/:postId/comments", addComment);
+router.post("/:postId/comments/:commentId/replies", replyToComment);
 
-// Admin-only actions
-router.delete("/:id", auth, isAdmin, softDeletePost);
-router.post("/:id/flag", auth, isAdmin, flagPost);
+// Authenticated routes
+router.delete("/:postId/comments/:commentId", auth, deleteComment); // User can delete own comment or admin can delete any
+
+// Admin-only routes
+router.delete("/:postId", auth, isAdmin, softDeletePost);  // Soft delete post (hide from users)
+router.delete("/:postId/full", auth, isAdmin, deletePost); // Full delete post (if implemented)
+router.post("/:postId/flag", auth, isAdmin, flagPost);
 
 module.exports = router;

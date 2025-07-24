@@ -57,41 +57,29 @@ const getPostById = async (req, res) => {
   }
 };
 
-// Like a post
-const likePost = async (req, res) => {
+// Toggle like/unlike a post
+const toggleLikePost = async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json({ message: "Post not found" });
-
-    const userId = req.body.userId;
+    const postId = req.params.id || req.params.postId;
+    const userId = req.user?._id || req.body.userId;
     if (!userId) return res.status(400).json({ message: "User ID is required" });
 
-    if (!post.likes.includes(userId)) {
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    const liked = post.likes.includes(userId.toString());
+
+    if (liked) {
+      post.likes = post.likes.filter(id => id.toString() !== userId.toString());
+    } else {
       post.likes.push(userId);
-      await post.save();
     }
 
-    res.json({ message: "Post liked", likes: post.likes });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-// Unlike a post
-const unlikePost = async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json({ message: "Post not found" });
-
-    const userId = req.body.userId;
-    if (!userId) return res.status(400).json({ message: "User ID is required" });
-
-    post.likes = post.likes.filter((id) => id.toString() !== userId);
     await post.save();
 
-    res.json({ message: "Post unliked", likes: post.likes });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.json({ liked: !liked, likesCount: post.likes.length });
+  } catch (error) {
+    res.status(500).json({ message: error.message || "Internal Server Error" });
   }
 };
 
@@ -108,18 +96,17 @@ const addComment = async (req, res) => {
     post.comments.push(comment);
     await post.save();
 
-    res.status(201).json({ message: "Comment added", comments: post.comments });
+    res.status(201).json(comment);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// Reply to a comment (no auth required)
+// Reply to a comment
 const replyToComment = async (req, res) => {
   try {
     const { postId, commentId } = req.params;
     const { userId, text } = req.body;
-
     if (!userId || !text) {
       return res.status(400).json({ message: "User ID and text are required" });
     }
@@ -130,29 +117,26 @@ const replyToComment = async (req, res) => {
     const comment = post.comments.id(commentId);
     if (!comment) return res.status(404).json({ message: "Comment not found" });
 
-    if (!comment.replies) {
-      comment.replies = [];
-    }
-
+    comment.replies = comment.replies || [];
     comment.replies.push({
       user: userId,
       text,
-      createdAt: new Date()
+      createdAt: new Date(),
     });
 
     await post.save();
 
-    res.status(201).json({ message: "Reply added", comment });
+    res.status(201).json(comment);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// Delete a comment (user can delete their own, admin can delete any)
+// Delete a comment (user can delete own; admin can delete any)
 const deleteComment = async (req, res) => {
   try {
     const { commentId } = req.params;
-    const userId = req.user._id;
+    const userId = req.user._id.toString();
     const userRole = req.user.role;
 
     const post = await Post.findById(req.params.id);
@@ -161,13 +145,14 @@ const deleteComment = async (req, res) => {
     const comment = post.comments.id(commentId);
     if (!comment) return res.status(404).json({ message: "Comment not found" });
 
-    if (userRole !== "admin" && comment.user.toString() !== userId.toString()) {
+    if (userRole !== "admin" && comment.user.toString() !== userId) {
       return res.status(403).json({ message: "You can only delete your own comment" });
     }
 
     comment.remove();
     await post.save();
-    res.json({ message: "Comment deleted", comments: post.comments });
+
+    res.json({ message: "Comment deleted" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -204,44 +189,15 @@ const flagPost = async (req, res) => {
     res.status(500).json({ message: "Error flagging post", error });
   }
 };
-export const toggleLikePost = async (req, res) => {
-  try {
-    const postId = req.params.postId;
-    const userId = req.user?._id; // or req.body.userId if you passed it like that
-
-    console.log('Toggling like:', { postId, userId });
-
-    const post = await Post.findById(postId);
-    if (!post) return res.status(404).json({ message: 'Post not found' });
-
-    const liked = post.likes.includes(userId);
-
-    if (liked) {
-      post.likes = post.likes.filter(id => id.toString() !== userId.toString());
-    } else {
-      post.likes.push(userId);
-    }
-
-    await post.save();
-
-    res.json({ liked: !liked });
-  } catch (error) {
-    console.error('toggleLikePost error:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-};
-
 
 module.exports = {
   getPosts,
   createPost,
   getPostById,
-  likePost,
-  unlikePost,
+  toggleLikePost,
   addComment,
   replyToComment,
   deleteComment,
   softDeletePost,
   flagPost,
-  toggleLikePost,
 };
