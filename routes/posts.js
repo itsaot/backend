@@ -10,7 +10,7 @@ const {
   deleteComment,
   softDeletePost,
   flagPost,
-  replyToComment // Make sure to implement this in controller
+  replyToComment
 } = require("../controllers/postController");
 
 const { auth, isAdmin } = require("../middleware/auth");
@@ -24,7 +24,7 @@ router.post("/:id/unlike", unlikePost);
 router.post("/:id/comments", addComment);
 
 // Authenticated route for replying to comments
-router.post('/:postId/comments/:commentId/replies', auth, replyToComment);
+router.post('/:postId/comments/:commentId/replies', replyToComment);
 
 // Authenticated user can delete their own comment
 router.delete("/:id/comments/:commentId", auth, deleteComment);

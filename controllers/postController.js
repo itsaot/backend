@@ -114,6 +114,40 @@ const addComment = async (req, res) => {
   }
 };
 
+// Reply to a comment (no auth required)
+const replyToComment = async (req, res) => {
+  try {
+    const { postId, commentId } = req.params;
+    const { userId, text } = req.body;
+
+    if (!userId || !text) {
+      return res.status(400).json({ message: "User ID and text are required" });
+    }
+
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    const comment = post.comments.id(commentId);
+    if (!comment) return res.status(404).json({ message: "Comment not found" });
+
+    if (!comment.replies) {
+      comment.replies = [];
+    }
+
+    comment.replies.push({
+      user: userId,
+      text,
+      createdAt: new Date()
+    });
+
+    await post.save();
+
+    res.status(201).json({ message: "Reply added", comment });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // Delete a comment (user can delete their own, admin can delete any)
 const deleteComment = async (req, res) => {
   try {
@@ -178,6 +212,7 @@ module.exports = {
   likePost,
   unlikePost,
   addComment,
+  replyToComment,
   deleteComment,
   softDeletePost,
   flagPost,
