@@ -3,12 +3,11 @@ const Post = require("../models/Post");
 // Get all posts
 const getPosts = async (req, res) => {
   try {
-    const isAdmin = req.user && req.user.role === "admin";
+    const isAdmin = req.user?.role === 'admin'; // assumes you have middleware that adds req.user
 
-    const posts = await Post.find(
-      isAdmin ? {} : { deletedForUser: false }
-    ).sort({ createdAt: -1 });
+    const filter = isAdmin ? {} : { deletedForUser: false };
 
+    const posts = await Post.find(filter).sort({ createdAt: -1 });
     res.json(posts);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -149,5 +148,5 @@ module.exports = {
   unlikePost,
   addComment,
   deleteComment,
-   softDeletePost,
+  softDeletePost,
 };

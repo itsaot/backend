@@ -23,4 +23,7 @@ router.patch("/:id/unlike", unlikePost);
 router.post("/:id/comments", addComment);
 router.delete("/:id/comments/:commentId", deleteComment);
 
+// Soft delete post
+router.patch("/:id/soft-delete", softDeletePost);
+
 module.exports = router;
