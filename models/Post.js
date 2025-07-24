@@ -3,16 +3,18 @@ const mongoose = require("mongoose");
 const PostSchema = new mongoose.Schema({
   type: {
     type: String,
-    enum: ["physical", "verbal", "cyber"], // abuse type
+    enum: ["physical", "verbal", "cyber", "general"], // Added "general" to allow more types
     required: true,
   },
   content: {
     type: String,
     required: true,
   },
-  tags: [{
-    type: String,
-  }],
+  tags: [
+    {
+      type: String,
+    },
+  ],
   category: {
     type: String,
   },
