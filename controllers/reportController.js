@@ -3,12 +3,38 @@ const Report = require('../models/Report');
 // POST /api/reports
 exports.createReport = async (req, res) => {
   try {
-    const report = new Report(req.body);
+    const {
+      incidentType,
+      platform,
+      description,
+      date,
+      severity,
+      yourRole,
+      evidence,
+      anonymous,
+    } = req.body;
+
+    // Validate required fields manually (optional, Mongoose also handles it)
+    if (!incidentType || !platform || !description || !yourRole) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const report = new Report({
+      incidentType,
+      platform,
+      description,
+      date,
+      severity,
+      yourRole,
+      evidence,
+      anonymous,
+    });
+
     await report.save();
     res.status(201).json({ message: "Report submitted successfully", report });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to submit report" });
+    console.error("Error in createReport:", err);
+    res.status(500).json({ message: "Failed to submit report", error: err.message });
   }
 };
 
@@ -18,6 +44,7 @@ exports.getAllReports = async (req, res) => {
     const reports = await Report.find().sort({ createdAt: -1 });
     res.json(reports);
   } catch (err) {
+    console.error("Error fetching reports:", err);
     res.status(500).json({ message: "Error fetching reports" });
   }
 };
@@ -26,9 +53,12 @@ exports.getAllReports = async (req, res) => {
 exports.getReportById = async (req, res) => {
   try {
     const report = await Report.findById(req.params.id);
-    if (!report) return res.status(404).json({ message: "Report not found" });
+    if (!report) {
+      return res.status(404).json({ message: "Report not found" });
+    }
     res.json(report);
   } catch (err) {
+    console.error("Error fetching report by ID:", err);
     res.status(500).json({ message: "Error fetching report" });
   }
 };
@@ -41,9 +71,12 @@ exports.flagReport = async (req, res) => {
       { flagged: true },
       { new: true }
     );
-    if (!report) return res.status(404).json({ message: "Report not found" });
+    if (!report) {
+      return res.status(404).json({ message: "Report not found" });
+    }
     res.json({ message: "Report flagged", report });
   } catch (err) {
+    console.error("Error flagging report:", err);
     res.status(500).json({ message: "Error flagging report" });
   }
 };
