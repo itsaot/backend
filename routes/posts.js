@@ -35,5 +35,6 @@ router.delete("/:postId/comments/:commentId", auth, deleteComment); // User can 
 router.delete("/:postId", auth, isAdmin, softDeletePost);  // Soft delete post (hide from users)
 router.delete("/:postId/full", auth, isAdmin, deletePost); // Full delete post (if implemented)
 router.post("/:postId/flag", auth, isAdmin, flagPost);
+router.delete("/:postId/full", auth, isAdmin, deletePost);
 
 module.exports = router;
