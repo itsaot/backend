@@ -14,7 +14,6 @@ exports.createReport = async (req, res) => {
       anonymous,
     } = req.body;
 
-    // Validate required fields manually (optional, Mongoose also handles it)
     if (!incidentType || !platform || !description || !yourRole) {
       return res.status(400).json({ message: "Missing required fields" });
     }
@@ -78,5 +77,30 @@ exports.flagReport = async (req, res) => {
   } catch (err) {
     console.error("Error flagging report:", err);
     res.status(500).json({ message: "Error flagging report" });
+  }
+};
+
+// ✅ GET /api/reports/flagged
+exports.getFlaggedReports = async (req, res) => {
+  try {
+    const flaggedReports = await Report.find({ flagged: true }).sort({ createdAt: -1 });
+    res.json(flaggedReports);
+  } catch (err) {
+    console.error("Error fetching flagged reports:", err);
+    res.status(500).json({ message: "Error fetching flagged reports" });
+  }
+};
+
+// ✅ DELETE /api/reports/:id (admin only)
+exports.deleteReport = async (req, res) => {
+  try {
+    const deleted = await Report.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: "Report not found" });
+    }
+    res.json({ message: "Report deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting report:", err);
+    res.status(500).json({ message: "Error deleting report" });
   }
 };

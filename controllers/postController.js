@@ -3,9 +3,14 @@ const Post = require("../models/Post");
 // Get all posts
 const getPosts = async (req, res) => {
   try {
-    const isAdmin = req.user?.role === 'admin';
+    const isAdmin = req.user?.role === "admin";
     const filter = isAdmin ? {} : { deletedForUser: false };
-    const posts = await Post.find(filter).sort({ createdAt: -1 });
+
+    const posts = await Post.find(filter)
+      .populate("createdBy", "username")
+      .populate("comments.user", "username")
+      .sort({ createdAt: -1 });
+
     res.json(posts);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -41,7 +46,10 @@ const createPost = async (req, res) => {
 // Get post by ID
 const getPostById = async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id);
+    const post = await Post.findById(req.params.id)
+      .populate("createdBy", "username")
+      .populate("comments.user", "username");
+
     if (!post) return res.status(404).json({ message: "Post not found" });
     res.json(post);
   } catch (err) {
@@ -78,7 +86,7 @@ const unlikePost = async (req, res) => {
     const userId = req.body.userId;
     if (!userId) return res.status(400).json({ message: "User ID is required" });
 
-    post.likes = post.likes.filter(id => id.toString() !== userId);
+    post.likes = post.likes.filter((id) => id.toString() !== userId);
     await post.save();
 
     res.json({ message: "Post unliked", likes: post.likes });
@@ -96,7 +104,7 @@ const addComment = async (req, res) => {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-    const comment = { userId, text, createdAt: new Date() };
+    const comment = { user: userId, text, createdAt: new Date() };
     post.comments.push(comment);
     await post.save();
 
@@ -119,7 +127,7 @@ const deleteComment = async (req, res) => {
     const comment = post.comments.id(commentId);
     if (!comment) return res.status(404).json({ message: "Comment not found" });
 
-    if (userRole !== 'admin' && comment.userId.toString() !== userId.toString()) {
+    if (userRole !== "admin" && comment.user.toString() !== userId.toString()) {
       return res.status(403).json({ message: "You can only delete your own comment" });
     }
 
@@ -152,12 +160,14 @@ const flagPost = async (req, res) => {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ message: "Post not found" });
 
+    const { reason } = req.body;
     post.flagged = true;
+    if (reason) post.flagReason = reason;
     await post.save();
 
-    res.json({ message: "Post flagged for admin review" });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(200).json({ message: "Post flagged successfully", post });
+  } catch (error) {
+    res.status(500).json({ message: "Error flagging post", error });
   }
 };
 
@@ -170,5 +180,5 @@ module.exports = {
   addComment,
   deleteComment,
   softDeletePost,
-  flagPost
+  flagPost,
 };
