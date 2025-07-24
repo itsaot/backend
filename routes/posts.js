@@ -5,7 +5,7 @@ const {
   getPosts,
   getPostById,
 } = require("../controllers/postController");
-const { auth } = require("../middleware/auth");
+
 
 router.post("/", auth, createPost);
 router.get("/", getPosts);
