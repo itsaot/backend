@@ -3,10 +3,8 @@ const Post = require("../models/Post");
 // Get all posts
 const getPosts = async (req, res) => {
   try {
-    const isAdmin = req.user?.role === 'admin'; // assumes you have middleware that adds req.user
-
+    const isAdmin = req.user?.role === 'admin';
     const filter = isAdmin ? {} : { deletedForUser: false };
-
     const posts = await Post.find(filter).sort({ createdAt: -1 });
     res.json(posts);
   } catch (err) {
@@ -14,11 +12,10 @@ const getPosts = async (req, res) => {
   }
 };
 
-// Create new post
+// Create a new post
 const createPost = async (req, res) => {
   try {
     const { content, author, type, isAnonymous, tags, category, adviceRequested } = req.body;
-
     if (!content || (!author && !isAnonymous)) {
       return res.status(400).json({ message: "Content and author are required" });
     }
@@ -37,7 +34,6 @@ const createPost = async (req, res) => {
     await newPost.save();
     res.status(201).json(newPost);
   } catch (err) {
-    console.error("Failed to create post:", err);
     res.status(500).json({ message: "Failed to create post" });
   }
 };
@@ -48,19 +44,6 @@ const getPostById = async (req, res) => {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ message: "Post not found" });
     res.json(post);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-const softDeletePost = async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json({ message: "Post not found" });
-
-    post.deletedForUser = true;
-    await post.save();
-
-    res.json({ message: "Post hidden from users but visible to admin" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -123,18 +106,56 @@ const addComment = async (req, res) => {
   }
 };
 
-// Delete a comment
+// Delete a comment (user can delete their own, admin can delete any)
 const deleteComment = async (req, res) => {
   try {
     const { commentId } = req.params;
+    const userId = req.user._id;
+    const userRole = req.user.role;
 
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-    post.comments = post.comments.filter(comment => comment._id.toString() !== commentId);
+    const comment = post.comments.id(commentId);
+    if (!comment) return res.status(404).json({ message: "Comment not found" });
+
+    if (userRole !== 'admin' && comment.userId.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "You can only delete your own comment" });
+    }
+
+    comment.remove();
+    await post.save();
+    res.json({ message: "Comment deleted", comments: post.comments });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Admin soft delete post (hide from users)
+const softDeletePost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    post.deletedForUser = true;
     await post.save();
 
-    res.json({ message: "Comment deleted", comments: post.comments });
+    res.json({ message: "Post hidden from users but visible to admin" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Admin flags a post
+const flagPost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    post.flagged = true;
+    await post.save();
+
+    res.json({ message: "Post flagged for admin review" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -149,4 +170,5 @@ module.exports = {
   addComment,
   deleteComment,
   softDeletePost,
+  flagPost
 };

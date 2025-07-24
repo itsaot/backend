@@ -59,7 +59,8 @@ const PostSchema = new mongoose.Schema({
   deletedForUser: {
     type: Boolean,
     default: false,
-  }
+  },
+flagged: { type: Boolean, default: false },
 });
 
 module.exports = mongoose.model("Post", PostSchema);
