@@ -1,9 +1,24 @@
 const mongoose = require("mongoose");
 
+const ReplySchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  text: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+});
+
+const CommentSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  text: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  replies: [ReplySchema],
+});
+
 const PostSchema = new mongoose.Schema({
   type: {
     type: String,
-    enum: ["physical", "verbal", "cyber", "general"], // Added "general" to allow more types
+    enum: ["physical", "verbal", "cyber", "general"],
     required: true,
   },
   content: {
@@ -46,21 +61,16 @@ const PostSchema = new mongoose.Schema({
   likes: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User"
-    }
+      ref: "User",
+    },
   ],
-  comments: [
-    {
-      user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-      text: { type: String, required: true },
-      createdAt: { type: Date, default: Date.now }
-    }
-  ],
+  comments: [CommentSchema],
   deletedForUser: {
     type: Boolean,
     default: false,
   },
-flagged: { type: Boolean, default: false },
+  flagged: { type: Boolean, default: false },
+  flagReason: { type: String }, // Add this field
 });
 
 module.exports = mongoose.model("Post", PostSchema);
