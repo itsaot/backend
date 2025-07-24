@@ -7,7 +7,7 @@ const {
 } = require("../controllers/postController");
 
 
-router.post("/", auth, createPost);
+router.post("/", createPost);
 router.get("/", getPosts);
 router.get("/:id", getPostById);
 
